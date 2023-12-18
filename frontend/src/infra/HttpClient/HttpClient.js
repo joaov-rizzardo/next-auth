@@ -1,12 +1,13 @@
 import { tokenService } from "../../services/auth/tokenService";
 import nookies from "nookies";
 
-export async function HttpClient(fetchUrl, fetchOptions) {
+export async function HttpClient(fetchUrl, fetchOptions = {}) {
+  const defaultHeaders = fetchOptions.headers || {};
   return fetch(fetchUrl, {
     ...fetchOptions,
     headers: {
       "Content-Type": "application/json",
-      ...fetchOptions.headers,
+      ...defaultHeaders,
     },
     body: fetchOptions.body ? JSON.stringify(fetchOptions.body) : null,
   })
@@ -26,12 +27,14 @@ export async function HttpClient(fetchUrl, fetchOptions) {
       const currentRefreshToken =
         fetchOptions.ctx?.req?.cookies["REFRESH_TOKEN"];
 
-      const refreshResponse = await HttpClient("/api/refresh", {
-        method: isServer ? "PUT" : "GET",
-        body: isServer && { refresh_token: currentRefreshToken },
-      });
-
       try {
+        const refreshResponse = await HttpClient(
+          "http://localhost:3001/api/refresh",
+          {
+            method: isServer ? "PUT" : "GET",
+            body: isServer && { refresh_token: currentRefreshToken },
+          }
+        );
         const newAccessToken = refreshResponse.body.data.access_token;
         const newRefreshToken = refreshResponse.body.data.refresh_token;
 
